@@ -1,4 +1,5 @@
 # pterren-game
+pattern funder game whit vuejs
 
 ## Project setup
 ```

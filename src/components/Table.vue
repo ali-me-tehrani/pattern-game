@@ -1,6 +1,6 @@
 <template>
-    <div :v-if="!loading" style="background:#1111; padding:18px">
-        <div class="row" style="align-items:flex-end;">
+    <div v-if="!loading" style="background:#1111; padding:18px; height: calc(100vh - 36px)">
+        <div class="row">
             <span
                 style="height:auto; background:transparent;" 
                 v-for="(rowInf, index) in verticalInfo" 
@@ -14,57 +14,48 @@
                 </i>
             </span>
         </div> 
-        <div class="row" v-for="(row, rowIndex) in table" :key="rowIndex">
+
+         <div class="col" >
             <span
-                style="height:auto; background:transparent;" 
-                v-for="(num, index_num) in horizontalInfo[rowIndex]" 
-                :key="index_num" 
+                v-for="(rowInf, colIndex) in horizontalInfo" 
+                :key="colIndex"
                 >
-                
+                <i 
+                    v-for="(num, i) in rowInf" 
+                    :key="i+'num'" 
+                    >
                     {{num}}
+                </i>
             </span>
-            <span 
-                v-for="(cell, colIndex) in row" 
-                :key="rowIndex+'-'+colIndex" 
-                :class="cell%3 == 0  ? 'g' : cell%3 == 1 ? 'b' : 'w'"
-                @click="changeState(rowIndex, colIndex)"
-                >
-            </span>
+        </div> 
+
+        <div class="container" id="container">
+            <div
+                :class="'g-item ' + (cell%3 == 0  ? 'g' : cell%3 == 1 ? 'b' : 'w')"
+                :id="colIndex"
+                v-for="(cell, colIndex) in table" 
+                :key="colIndex + 'g'" 
+                @click="changeState(colIndex)"
+            >
+            </div>
         </div>
-        <div>{{status}}</div>
+
+        <div class="modal" v-show="status !== 'not complet'">
+            🎉🎊congratulation🎉🎊
+        </div>
+
     </div>
 </template>
 
 <script>
 import _ from "lodash"
+
 export default {
     name:'Table',
     data () {
         return {
-            table : [
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            ],
-            backTable : [
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            ],
+            backTable : new Array(100).fill(0),
+            table: new Array(100).fill(0),
             OriginalTable:[],
             verticalInfo:[],
             horizontalInfo:[],
@@ -75,21 +66,63 @@ export default {
     },
     mounted(){
         this.OriginalTable = this.createTable()
+        
+        let element = document.getElementById("container")
+        let moved
+        let startId
+        let endId
+
+        let downListener = (event) =>  {
+            startId = event.target.id
+            moved = false
+        }
+        element.addEventListener('mousedown', downListener)
+
+        let moveListener = () => {
+            moved = true
+        }
+        element.addEventListener('mousemove', moveListener)
+        
+        let upListener = (event) => {
+            if (moved) {
+                endId = event.target.id;
+                let start = Math.min(startId, endId)
+                let end = Math.max(startId, endId)
+                
+                if( parseInt(end-start) % 10 === 0 ){
+                    for(let i = start; i <= end; i += 10){
+                        this.changeState(i)
+                    }
+                }else if( parseInt(parseInt(end)/10) === parseInt(parseInt(start) / 10) ){
+                     for(let i = start; i <= end; i += 1){
+                        this.changeState(i)
+                    }
+                }
+
+            } else {
+            }
+        }
+        element.addEventListener('mouseup', upListener)
     },
     methods:{
-        changeState(row, col){
-            switch(this.table[row][col]){
+        changeState(index){
+            let row = parseInt(index / 10)
+            let col = parseInt(index % 10)
+            switch(this.table[index]){
                 case 0:
-                    this.$set(this.table, row + "-" + col + "-" + this.count, this.table[row][col] += 1) 
+                    // this.$set(this.table, row + "-" + col + "-" + this.count, this.table[row][col] += 1) 
+                    this.$set(this.table, row + "-" + col + "-" + this.count, this.table[index] += 1) 
                     break;
                 case -1:
-                    this.$set(this.table, row + "-" + col + "-" + this.count, this.table[row][col] += 1) 
+                    // this.$set(this.table, row + "-" + col + "-" + this.count, this.table[row][col] += 1) 
+                    this.$set(this.table, row + "-" + col + "-" + this.count, this.table[index] += 1) 
                     break;
                 case 1:
-                    this.$set(this.table, row + "-" + col + "-" + this.count, this.table[row][col] = -1)
+                    // this.$set(this.table, row + "-" + col + "-" + this.count, this.table[row][col] = -1)
+                    this.$set(this.table, row + "-" + col + "-" + this.count, this.table[index] -= 2) 
                     break; 
             }
-            this.backTable[row][col] = this.table[row][col]
+            this.backTable[index] = this.table[index]
             this.count += 1
             this.checkTable()           
         },
@@ -98,25 +131,21 @@ export default {
                 this.status = "complet"
         },
         createTable(dimention = 10){
-            let table = []
+            let table = new Array(dimention*dimention).fill(0)
            
-            for(let i = 0; i < dimention; i += 1)
-                table.push(new Array(dimention).fill(0))
-
-            for(let i = 0; i < dimention; i += 1){
-                for(let j = 0; j < dimention; j += 1){
-                    if(parseInt(Math.random()*2))
-                        table[i][j] = 1
+            for(let i = 0; i < table.length; i += 1){
+                    if(parseInt(Math.random()*3))
+                        table[i] = 1
                     else
-                        table[i][j] = -1
-                }
+                        table[i] = -1
             }
 
             this.getInfo(table)
 
             return table
         },
-        getInfo(table){
+        getInfo(array){
+            let table = _.chunk(array, Math.sqrt(array.length))
             let dimention = table.length
             //vertical 
             for(let i = 0; i < dimention; i += 1){
@@ -166,48 +195,110 @@ export default {
 }
 </script>
 
-<style>
+<style lang="sass">
+$borderColor: #454545
 
-.flex{
-    display: flex;
-    flex: 1;
-    align-items: center;
-    justify-content: center;
-    background: #0003;
-    padding: 16px;
-}
+.flex
+    display: flex 
+    flex: 1 
+    align-items: flex-start 
+    justify-content: flex-start 
+    background: #0003 
+    padding: 16px 
 
-.w{
-    background-color: white;
-}
+.w
+    background-color: white 
 
-.b{
-    background-color: black;
-}
+.b
+    background-color: black  
 
-.row{
-    /* width: 400px; */
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    margin-right:100px;
-}
+.g
+    background: #828282
 
-i{
-    display: inline-block;
-    width: 15px;
-    height: 15px;
-    /* padding: 9px; */
-    margin: 2px;
-}
+.row
+    display: grid 
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto
+    align-items: flex-end
+    // justify-content: center 
+    margin-left: 60px 
+    width: 70vw 
+    max-width: 400px
+    span 
+        display: grid
 
-span{
-    display: inline-block;
-    background-color: gray;
-    width: 15px;
-    height: 15px;
-    padding: 9px;
-    margin: 2px;
-}
+.col
+    display: grid 
+    grid-template-rows: auto auto auto auto auto auto auto auto auto auto
+    margin: auto 
+    width: auto
+    height: 70vw
+    max-height: 400px
+    position: absolute
+    margin-right: 5px
+    span 
+        text-align: right
+        background: transparent
+        align-items: center;
+        display: flex;
+        justify-content: flex-end;
+        
+        i
+            margin-right: 2px
+
+i
+    display: inline-block 
+
+span
+    display: inline-block 
+    background-color: gray 
+
+.container
+    display: grid 
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto 
+    padding: 0 10px 
+    width: 70vw 
+    height: 70vw
+    max-height: 400px
+    max-width: 400px 
+    margin-left: 50px
+
+.modal
+    width: 100vw
+    height: 100vh
+    background: #0007
+    position: absolute
+    top: 0
+    bottom: 0
+    right: 0 
+    left: 0
+    display: flex
+    align-items: center
+    justify-content: center
+    color: #83F52C
+    font-size: 4em
+    font-weight: bolder
+
+
+.g-item
+  border: 0.5px solid 
+  text-align: center 
+
+.g-item:nth-child(5n+0)
+    border-right: 2px solid $borderColor 
+
+.g-item:nth-child(10n + 1)
+        border-left: 2px solid $borderColor
+
+@for $i from 51 through 60 
+    .g-item:nth-child(50n + #{$i})
+        border-top: 2px solid $borderColor 
+
+@for $i from 1 through 10 
+    .g-item:nth-child(#{$i})
+        border-top: 2px solid $borderColor
+
+@for $i from 91 through 100 
+    .g-item:nth-child(#{$i})
+        border-bottom: 2px solid $borderColor
 
 </style>

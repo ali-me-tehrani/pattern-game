@@ -99,7 +99,6 @@ export default {
                     }
                 }
 
-            } else {
             }
         }
         element.addEventListener('mouseup', upListener)

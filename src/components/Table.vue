@@ -1,46 +1,38 @@
 <template>
-    <div v-if="!loading" style="background:#1111; padding:18px; height: calc(100vh - 36px)">
+    <div style="background:#1111; padding:18px; height: calc(100vh - 36px)">
         <div class="row">
-            <span
-                style="height:auto; background:transparent;" 
-                v-for="(rowInf, index) in verticalInfo" 
-                :key="index" 
-                >
-                <i 
-                    v-for="(num, i) in rowInf" 
-                    :key="i+'num'" 
-                    >
-                    {{num}}
+            <span style="height:auto; background:transparent;"
+                  v-for="(rowInf, index) in verticalInfo"
+                  :key="index">
+                <i v-for="(num, i) in rowInf"
+                   :key="i + 'num'">
+                    {{ num }}
                 </i>
             </span>
-        </div> 
+        </div>
 
-         <div class="col" >
-            <span
-                v-for="(rowInf, colIndex) in horizontalInfo" 
-                :key="colIndex"
-                >
-                <i 
-                    v-for="(num, i) in rowInf" 
-                    :key="i+'num'" 
-                    >
-                    {{num}}
+        <div class="col">
+            <span v-for="(rowInf, colIndex) in horizontalInfo"
+                  :key="colIndex">
+                <i v-for="(num, i) in rowInf"
+                   :key="i + 'num'">
+                    {{ num }}
                 </i>
             </span>
-        </div> 
+        </div>
 
-        <div class="container" id="container">
-            <div
-                :class="'g-item ' + (cell%3 == 0  ? 'g' : cell%3 == 1 ? 'b' : 'w')"
-                :id="colIndex"
-                v-for="(cell, colIndex) in table" 
-                :key="colIndex + 'g'" 
-                @click="changeState(colIndex)"
-            >
+        <div class="container"
+             id="container">
+            <div :class="'g-item ' + (cell % 3 == 0 ? 'g' : cell % 3 == 1 ? 'b' : 'w')"
+                 :id="colIndex"
+                 v-for="(cell, colIndex) in table"
+                 :key="colIndex + 'g'"
+                 @click="changeState(colIndex)">
             </div>
         </div>
 
-        <div class="modal" v-show="status !== 'not complet'">
+        <div class="modal"
+             v-show="isCompleted">
             🎉🎊congratulation🎉🎊
         </div>
 
@@ -51,116 +43,74 @@
 import _ from "lodash"
 
 export default {
-    name:'Table',
-    data () {
+    data() {
         return {
-            backTable : new Array(100).fill(0),
+            backTable: new Array(100).fill(0),
             table: new Array(100).fill(0),
-            OriginalTable:[],
-            verticalInfo:[],
-            horizontalInfo:[],
-            status:"not complet",
-            count:0,
-            loading: true
+            OriginalTable: [],
+            verticalInfo: [],
+            horizontalInfo: [],
+            isCompleted: false,
         }
     },
-    mounted(){
+    mounted() {
         this.OriginalTable = this.createTable()
-        
-        let element = document.getElementById("container")
-        let moved
-        let startId
-        let endId
-
-        let downListener = (event) =>  {
-            startId = event.target.id
-            moved = false
-        }
-        element.addEventListener('mousedown', downListener)
-
-        let moveListener = () => {
-            moved = true
-        }
-        element.addEventListener('mousemove', moveListener)
-        
-        let upListener = (event) => {
-            if (moved) {
-                endId = event.target.id;
-                let start = Math.min(startId, endId)
-                let end = Math.max(startId, endId)
-                
-                if( parseInt(end-start) % 10 === 0 ){
-                    for(let i = start; i <= end; i += 10){
-                        this.changeState(i)
-                    }
-                }else if( parseInt(parseInt(end)/10) === parseInt(parseInt(start) / 10) ){
-                     for(let i = start; i <= end; i += 1){
-                        this.changeState(i)
-                    }
-                }
-
-            }
-        }
-        element.addEventListener('mouseup', upListener)
+        this.setupEventListeners()
     },
-    methods:{
-        changeState(index){
+    methods: {
+        changeState(index) {
             let row = parseInt(index / 10)
             let col = parseInt(index % 10)
-            switch(this.table[index]){
+            switch (this.table[index]) {
                 case 0:
-                    // this.$set(this.table, row + "-" + col + "-" + this.count, this.table[row][col] += 1) 
-                    this.$set(this.table, row + "-" + col + "-" + this.count, this.table[index] += 1) 
+                    this.table[index] += 1
                     break;
                 case -1:
-                    // this.$set(this.table, row + "-" + col + "-" + this.count, this.table[row][col] += 1) 
-                    this.$set(this.table, row + "-" + col + "-" + this.count, this.table[index] += 1) 
+                    this.table[index] += 1
                     break;
                 case 1:
-                    // this.$set(this.table, row + "-" + col + "-" + this.count, this.table[row][col] = -1)
-                    this.$set(this.table, row + "-" + col + "-" + this.count, this.table[index] -= 2) 
-                    break; 
+                    this.table[index] -= 2
+                    break;
             }
             this.backTable[index] = this.table[index]
-            this.count += 1
-            this.checkTable()           
+            this.checkTable()
         },
-        checkTable(){
-            if(_.isEqual(this.backTable,this.OriginalTable) )
-                this.status = "complet"
+        checkTable() {
+            if (_.isEqual(this.backTable, this.OriginalTable))
+                this.isCompleted = true
         },
-        createTable(dimention = 10){
-            let table = new Array(dimention*dimention).fill(0)
-           
-            for(let i = 0; i < table.length; i += 1){
-                    if(parseInt(Math.random()*3))
-                        table[i] = 1
-                    else
-                        table[i] = -1
+        createTable(dimension = 10) {
+            let table = new Array(dimension * dimension).fill(0)
+
+            for (let i = 0; i < table.length; i += 1) {
+                if (parseInt(Math.random() * 3))
+                    table[i] = 1
+                else
+                    table[i] = -1
             }
 
             this.getInfo(table)
 
             return table
         },
-        getInfo(array){
+        getInfo(array) {
             let table = _.chunk(array, Math.sqrt(array.length))
-            let dimention = table.length
+            let dimension = table.length
             //vertical 
-            for(let i = 0; i < dimention; i += 1){
+            for (let i = 0; i < dimension; i += 1) {
                 let num = 0
                 let row = []
-               
-                for(let j = 0; j < dimention; j += 1){
-                    if(table[j][i]==1){
+
+                for (let j = 0; j < dimension; j += 1) {
+                    if (table[j][i] == 1) {
                         num += 1
-                    }else if( j != 0 && table[j-1][i] == 1 ){
+                    } else if (j != 0 && table[j - 1][i] == 1) {
                         row.push(num)
                         num = 0
                     }
                 }
 
-                if(num){
+                if (num) {
                     row.push(num)
                 }
 
@@ -168,27 +118,69 @@ export default {
             }
 
             //horizontal
-            for(let i = 0; i < dimention; i += 1){
+            for (let i = 0; i < dimension; i += 1) {
                 let num = 0
                 let row = []
-               
-                for(let j = 0; j < dimention; j += 1){
-                    if(table[i][j]==1){
+
+                for (let j = 0; j < dimension; j += 1) {
+                    if (table[i][j] == 1) {
                         num += 1
-                    }else if( j != 0 && table[i][j-1] == 1 ){
+                    } else if (j != 0 && table[i][j - 1] == 1) {
                         row.push(num)
                         num = 0
                     }
                 }
 
-                if(num){
+                if (num) {
                     row.push(num)
                 }
 
                 this.horizontalInfo.push(row)
             }
-            
-            this.loading = false
+        },
+        setupEventListeners() {
+            let element = document.getElementById("container")
+            if (!element) {
+                setTimeout(() => {
+                    this.setupEventListeners()
+                }, 100)
+                return
+            }
+            let moved
+            let startId
+            let endId
+
+            let downListener = (event) => {
+                startId = event.target.id
+                moved = false
+            }
+            element.addEventListener('mousedown', downListener)
+
+            let moveListener = () => {
+                moved = true
+            }
+            element.addEventListener('mousemove', moveListener)
+
+            let upListener = (event) => {
+                if (!moved) return
+
+                endId = event.target.id;
+                let start = Math.min(startId, endId)
+                let end = Math.max(startId, endId)
+
+                if (parseInt(end - start) % 10 === 0) {
+                    for (let i = start; i <= end; i += 10) {
+                        this.changeState(i)
+                    }
+                } else if (parseInt(parseInt(end) / 10) === parseInt(parseInt(start) / 10)) {
+                    for (let i = start; i <= end; i += 1) {
+                        this.changeState(i)
+                    }
+                }
+
+
+            }
+            element.addEventListener('mouseup', upListener)
         }
     }
 }
@@ -218,7 +210,6 @@ $borderColor: #454545
     display: grid 
     grid-template-columns: auto auto auto auto auto auto auto auto auto auto
     align-items: flex-end
-    // justify-content: center 
     margin-left: 60px 
     width: 70vw 
     max-width: 400px
@@ -237,9 +228,9 @@ $borderColor: #454545
     span 
         text-align: right
         background: transparent
-        align-items: center;
-        display: flex;
-        justify-content: flex-end;
+        align-items: center
+        display: flex
+        justify-content: flex-end
         
         i
             margin-right: 2px
